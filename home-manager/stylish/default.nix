@@ -5,16 +5,15 @@ self:
 
 let
   cfg = config.services.stylish;
-  prefixQuotedValOrEmptyNull = str: pfx: if str != null then "${pfx}\"${str}\"" else "";
-in
+  prefixQuotedValOrEmptyNull = str: pfx:
+    if str != null then ''${pfx}"${str}"'' else "";
 
-with lib;
+in with lib;
 with builtins;
 
 {
 
-  imports = [
-  ];
+  imports = [ ];
 
   ###### interface
 
@@ -42,7 +41,7 @@ with builtins;
 
       flags = mkOption {
         type = listOf str;
-        default = [];
+        default = [ ];
         description = mdDoc ''
           Flags for `styli.sh` (list of string).
           (See [`styli.sh` documentation](https://github.com/thevinter/styli.sh))
@@ -62,7 +61,6 @@ with builtins;
 
     };
   };
-
 
   ###### implementation
 
@@ -85,24 +83,22 @@ with builtins;
 
       Service = {
         Type = "oneshot";
-        ExecStart = ''${cfg.package}/bin/styli.sh ${prefixQuotedValOrEmptyNull cfg.search "-s "} ${if cfg.flags != null then (concatStringsSep " " cfg.flags) else ""}'';
+        ExecStart = "${cfg.package}/bin/styli.sh ${
+            prefixQuotedValOrEmptyNull cfg.search "-s "
+          } ${
+            if cfg.flags != null then (concatStringsSep " " cfg.flags) else ""
+          }";
       };
 
-      Install = {
-        WantedBy = [ "graphical.target" ];
-      };
+      Install = { WantedBy = [ "graphical.target" ]; };
 
     };
 
     systemd.user.timers.stylish = {
       # enable = cfg.refreshInterval != "0";
-      Unit = {
-        Description = "Run styli.sh at refresh interval";
-      };
+      Unit = { Description = "Run styli.sh at refresh interval"; };
 
-      Install = {
-        WantedBy = [ "timers.target" ];
-      };
+      Install = { WantedBy = [ "timers.target" ]; };
 
       Timer = {
 

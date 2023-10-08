@@ -3,8 +3,7 @@ self:
 
 with lib;
 
-let
-  cfg = config.services.hyprpaper;
+let cfg = config.services.hyprpaper;
 in {
   options.services.hyprpaper = {
     enable = mkEnableOption "hyprpaper";
@@ -28,21 +27,20 @@ in {
   };
 
   config = mkIf cfg.enable {
-    systemd.user.services.hyprpaper =
-      let
-        hpconfig = pkgs.writeTextFile {
-          name="hyprpaper.conf";
-          text=cfg.configText;
-          executable = false;
-        };
-      in {
-        Unit = { Description = "hyprpaper wallpaper"; };
-        Service = {
-          ExecStart = "${cfg.package}/bin/hyprpaper -c ${hpconfig}";
-          ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
-          Restart = "always";
-        };
-        Install = { WantedBy = [ "graphical-session.target" ]; };
+    systemd.user.services.hyprpaper = let
+      hpconfig = pkgs.writeTextFile {
+        name = "hyprpaper.conf";
+        text = cfg.configText;
+        executable = false;
       };
+    in {
+      Unit = { Description = "hyprpaper wallpaper"; };
+      Service = {
+        ExecStart = "${cfg.package}/bin/hyprpaper -c ${hpconfig}";
+        ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
+        Restart = "always";
+      };
+      Install = { WantedBy = [ "graphical-session.target" ]; };
+    };
   };
 }
