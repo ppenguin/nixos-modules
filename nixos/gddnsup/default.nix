@@ -6,19 +6,14 @@
 # Rationale: Couldn't get ddclient to work quickly enough (might be a documentation issue?), and it would be
 # overkill anyway if just using GD.
 
-self: {
-  config
-, pkgs
-, lib
-, ...
-}:
+self:
+{ config, pkgs, lib, ... }:
 
 let
   cfg = config.services.gddnsup;
   boolToStr = bool: if bool then "yes" else "no";
-in
 
-with lib;
+in with lib;
 
 {
 
@@ -37,7 +32,7 @@ with lib;
       };
 
       domainHosts = mkOption {
-        default = {};
+        default = { };
         type = attrsOf (listOf str);
         description = mdDoc ''
           Attribute set of domain names with host lists to synchronize.
@@ -91,7 +86,6 @@ with lib;
     };
   };
 
-
   ###### implementation
 
   config = mkIf config.services.gddnsup.enable {
@@ -107,14 +101,19 @@ with lib;
           text = (builtins.readFile ./gddnsup.sh);
           runtimeInputs = [ pkgs.curl ];
         };
-        hostsdomains = lists.flatten (map (d: (map (h: h + "@" + d) (builtins.getAttr d cfg.domainHosts))) (attrNames cfg.domainHosts));
+        hostsdomains = lists.flatten
+          (map (d: (map (h: h + "@" + d) (builtins.getAttr d cfg.domainHosts)))
+            (attrNames cfg.domainHosts));
       in {
         # LoadCredential acts like a "proxy" to expose specific files that are only accessible by root to a DynamicUser service
         # (only for the life cycle of the service instance). Cool stuff!
-        LoadCredential = [ "apikey:${cfg.apikeyFile}" "apisecret:${cfg.apisecretFile}" ];
+        LoadCredential =
+          [ "apikey:${cfg.apikeyFile}" "apisecret:${cfg.apisecretFile}" ];
         DynamicUser = true;
         Type = "oneshot";
-        ExecStart = ''${script}/bin/gddnsup.sh '%d/apikey' '%d/apisecret' ${escapeShellArgs hostsdomains}'';
+        ExecStart = "${script}/bin/gddnsup.sh '%d/apikey' '%d/apisecret' ${
+            escapeShellArgs hostsdomains
+          }";
       };
     };
 

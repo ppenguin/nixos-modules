@@ -1,4 +1,4 @@
-#Copied from https://github.com/EtceteraLabs/nix-config/blob/master/loginctl-linger.nix
+# Copied from https://github.com/EtceteraLabs/nix-config/blob/master/loginctl-linger.nix
 self:
 { config, lib, pkgs, ... }:
 
@@ -14,31 +14,30 @@ let
 
   dataDir = "/var/lib/systemd/linger";
 
-  lingeringUsers = map (u: u.name) (attrValues (flip filterAttrs config.users.users (n: u: u.linger)));
+  lingeringUsers = map (u: u.name)
+    (attrValues (flip filterAttrs config.users.users (n: u: u.linger)));
 
-  lingeringUsersFile = builtins.toFile "lingering-users"
-    (concatStrings (map (s: "${s}\n")
-      (sort (a: b: a < b) lingeringUsers))); # this sorting is important for `comm` to work correctly
+  lingeringUsersFile = builtins.toFile "lingering-users" (concatStrings (map
+    (s: ''
+      ${s}
+    '') (sort (a: b: a < b)
+      lingeringUsers))); # this sorting is important for `comm` to work correctly
 
-in
-
-{
+in {
   options = {
     users.users = mkOption {
-      type = with types; attrsOf (submodule {
-        options = {
-          linger = mkEnableOption "lingering for the user";
-        };
-      });
+      type = with types;
+        attrsOf (submodule {
+          options = { linger = mkEnableOption "lingering for the user"; };
+        });
     };
   };
 
   config = {
-    system.activationScripts.update-lingering =
-      stringAfter [ "users" ] ''
-        lingering=$(ls ${dataDir} 2> /dev/null | sort)
-        echo "$lingering" | comm -3 -1 ${lingeringUsersFile} - | xargs -r ${pkgs.systemd}/bin/loginctl disable-linger
-        echo "$lingering" | comm -3 -2 ${lingeringUsersFile} - | xargs -r ${pkgs.systemd}/bin/loginctl enable-linger
-      '';
+    system.activationScripts.update-lingering = stringAfter [ "users" ] ''
+      lingering=$(ls ${dataDir} 2> /dev/null | sort)
+      echo "$lingering" | comm -3 -1 ${lingeringUsersFile} - | xargs -r ${pkgs.systemd}/bin/loginctl disable-linger
+      echo "$lingering" | comm -3 -2 ${lingeringUsersFile} - | xargs -r ${pkgs.systemd}/bin/loginctl enable-linger
+    '';
   };
 }
