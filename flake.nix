@@ -5,6 +5,8 @@
 
     nixosModules = {
       gddnsup = import ./nixos/gddnsup self;
+      compose-pod = import ./nixos/compose-pod self;
+      linger = import ./nixos/linger self;
     };
 
     homeManagerModules = {

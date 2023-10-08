@@ -32,7 +32,7 @@ let
 in
 {
 
-  imports = [ ../linger ];
+  imports = [ self.nixosModules.linger ];
 
   options.services.compose-pod = mkOption {
     type = types.attrsOf (types.submodule podConfig);
