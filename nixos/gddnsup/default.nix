@@ -6,7 +6,12 @@
 # Rationale: Couldn't get ddclient to work quickly enough (might be a documentation issue?), and it would be
 # overkill anyway if just using GD.
 
-{ config, pkgs, lib, ... }:
+self: {
+  config
+, pkgs
+, lib
+, ...
+}:
 
 let
   cfg = config.services.gddnsup;
@@ -16,9 +21,6 @@ in
 with lib;
 
 {
-
-  imports = [
-  ];
 
   ###### interface
 

@@ -1,4 +1,9 @@
-{ pkgs, lib, config, ... }:
+self: {
+	pkgs
+, lib
+, config
+, ...
+}:
 # generalises this as a HM module:
 # monitor-sensor | awk '$4 ~ /normal/ { print "0" }; $4 ~ /left-up/ { print "1" }; $4 ~ /right-up/ { print "3" }; $4 ~ /bottom-up/ { print "2" }; { system("") }' | xargs -rI{} hyprctl keyword monitor 'eDP-1,transform,{}'
 
