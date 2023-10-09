@@ -4,16 +4,18 @@
   outputs = { self }: {
 
     nixosModules = {
-      gddnsup = import ./nixos/gddnsup self;
       compose-pod = import ./nixos/compose-pod self;
+      gddnsup = import ./nixos/gddnsup self;
+      go-shadowsocks2 = import ./nixos/go-shadowsocks2 self;
       linger = import ./nixos/linger self;
+      powerdns = import ./nixos/powerdns self;
     };
 
     homeManagerModules = {
-      iiorient = import ./home-manager/iiorient self;
       hyprpaper = import ./home-manager/hyprpaper self;
-      stylish = import ./home-manager/stylish self;
+      iiorient = import ./home-manager/iiorient self;
       monitors = import ./home-manager/monitors self;
+      stylish = import ./home-manager/stylish self;
     };
 
   };
