@@ -21,7 +21,7 @@ let
         description = "The group under which to run the pod.";
       };
       envFile = mkOption {
-        type = types.path;
+        type = types.nullOr types.path;
         default = null;
         description =
           "Path to the environment file for the pod. (Will be loaded with systemd LoadCredentials, recommended to use e.g. a sops-nix secrets path)";
