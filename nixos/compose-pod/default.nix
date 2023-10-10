@@ -46,15 +46,18 @@ in {
     # We could maybe do it like here: https://gist.github.com/udf/4d9301bdc02ab38439fd64fbda06ea43
     # but this is only slightly less verbose...
 
-    system.activationScripts = (mapAttrs' (podname: cfg:
-      (let systemdDir = "/var/lib/${cfg.user}/.config/systemd/user";
+    # FIXME: the activation script doesn't work the first time if the user doesn't yet exist, because the create user script (a systemd service?) runs later
+    system.activationScripts = (mapAttrs' (podname: cfg: (
+      let
+        ucfgDir = "/var/lib/${cfg.user}/.config";
+        systemdDir = "${ucfgDir}/systemd/user";
       in nameValuePair
       "enable-pod-${podname}" { # here the systemd unit definition
         text = ''
           rm -rf "${systemdDir}/"
           mkdir -p "${systemdDir}/default.target.wants"
           ln -s /etc/systemd/user/pod-${podname}.service "${systemdDir}/default.target.wants/"
-          chown -R ${cfg.user}:${cfg.group} "${systemdDir}"
+          chown -R ${cfg.user}:${cfg.group} "${ucfgDir}"
         '';
       })) eachPod);
 
