@@ -29,9 +29,24 @@ let
     };
   };
 
+  # TODO: check whether newuidmap is guaranteed in /run/wrappers/bin by NixOS or where it comes from...
+  # Oh wait: https://github.com/NixOS/nixpkgs/issues/138423#issuecomment-1609849179
+  # Hm, it segfaults with
+  #   `/run/wrappers/bin/newuidmap 577301 0 992 1 1 231072 65536`: Assertion `!(st.st_mode & S_ISUID) || (st.st_uid == geteuid())` in NixOS's wrapper.c failed.`
+  # could this be the solution? https://github.com/NixOS/nixpkgs/pull/231673
+  compose-wrap = stateDir: (pkgs.writeShellApplication {
+    name = "compose-wrap.sh";
+    runtimeInputs = with pkgs; [ podman-compose (podman.override { extraPackages = [ "/run/wrappers" ]; }) ]; 
+    text = ''
+      HOME="${stateDir}" podman-compose "$@"
+    '';
+  }) + "/bin/compose-wrap.sh";
+
 in {
 
-  imports = [ self.nixosModules.linger ];
+  imports = [
+    self.nixosModules.linger
+  ];
 
   options.services.compose-pod = mkOption {
     type = types.attrsOf (types.submodule podConfig);
@@ -46,53 +61,50 @@ in {
     # We could maybe do it like here: https://gist.github.com/udf/4d9301bdc02ab38439fd64fbda06ea43
     # but this is only slightly less verbose...
 
-    # FIXME: the activation script doesn't work the first time if the user doesn't yet exist, because the create user script (a systemd service?) runs later
-    system.activationScripts = (mapAttrs' (podname: cfg: (
+    systemd.services = (mapAttrs' (podname: cfg: (
       let
-        ucfgDir = "/var/lib/${cfg.user}/.config";
-        systemdDir = "${ucfgDir}/systemd/user";
-      in nameValuePair
-      "enable-pod-${podname}" { # here the systemd unit definition
-        text = ''
-          rm -rf "${systemdDir}/"
-          mkdir -p "${systemdDir}/default.target.wants"
-          ln -s /etc/systemd/user/pod-${podname}.service "${systemdDir}/default.target.wants/"
-          chown -R ${cfg.user}:${cfg.group} "${ucfgDir}"
-        '';
-      })) eachPod);
-
-    systemd.user.services = (mapAttrs' (podname: cfg:
-      (let homeDir = "/var/lib/${cfg.user}";
-      in nameValuePair "pod-${podname}" { # here the systemd unit definition
+        /*homeDir = "/var/lib/${cfg.user}";*/
+      in
+      nameValuePair "pod-${podname}" { # here the systemd unit definition
         enable = true;
         description = "Service for ${podname} pod";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        # restartTriggers = [ cfg.apikeyFile cfg.apisecretFile ];
         path = with pkgs; [
           podman-compose
           podman
           su # for newuidmap => not sure how /run/wrappers/bin is generated, but in any case it must be explicitly in the path of the executed script
         ];
-        wantedBy = [ # "default.target"
-        ]; # crappy UX, see https://github.com/NixOS/nixpkgs/issues/21460
-        environment = { HOME = "${homeDir}"; };
-        script = ''
-          export PATH=$PATH:/run/wrappers/bin
-          podman-compose \
-            ${
-              optionalString (cfg.envFile != null) "--env-file=${cfg.envFile}"
-            } \
-            -f ${cfg.composeFile} \
-            up
-        '';
-      })) eachPod);
+
+        unitConfig = { };
+        
+        serviceConfig = {
+          Type = "exec";
+          LoadCredential = lib.lists.optional (cfg.envFile != null) [ "envfile:${cfg.envFile}" ];
+          # Will be available to the systemd exec env as %d/envfile
+          DynamicUser = true;
+          StateDirectory = "${cfg.user}";
+          User = "${cfg.user}";
+          Group = "${cfg.group}";
+          ExecStart = ''
+            ${compose-wrap "/var/lib/${cfg.user}"} \
+              ${
+                optionalString (cfg.envFile != null) "--env-file=%d/envfile"
+              } \
+              -p "${podname}" \
+              -f ${cfg.composeFile} \
+              up
+          '';
+        };
+      }
+    )) eachPod);
 
     users.users = mapAttrs' (podname: cfg:
       (nameValuePair "${cfg.user}" {
         isSystemUser = true;
-        linger = true;
         autoSubUidGidRange = true;
         group = cfg.group;
-        home = "/var/lib/${cfg.user}";
-        createHome = true;
         description = "User for pod ${podname}";
       })) eachPod;
 
