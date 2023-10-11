@@ -63,7 +63,7 @@ in {
 
     systemd.services = (mapAttrs' (podname: cfg: (
       let
-        /*homeDir = "/var/lib/${cfg.user}";*/
+        homeDir = "/var/lib/${cfg.user}";
       in
       nameValuePair "pod-${podname}" { # here the systemd unit definition
         enable = true;
@@ -71,6 +71,19 @@ in {
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         # restartTriggers = [ cfg.apikeyFile cfg.apisecretFile ];
+        path = with pkgs; [
+          bash
+          podman-compose
+          (podman.override { extraPackages = [ "/run/wrappers" ]; })
+        ];
+        environment = { # check whether we have variable expansion...
+          HOME = "${homeDir}";
+          # XDG_DATA_DIRS = "${homeDir}/.local";
+          # XDG_CONFIG_DIRS = "${homeDir}/.config";
+          XDG_RUNTIME_DIR = "/run/user/$UID";
+          # DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/$UID/bus";
+          CHECK_EXP = "%d%h";
+        };
         serviceConfig = {
           Type = "exec";
           LoadCredential = lib.lists.optional (cfg.envFile != null) [ "envfile:${cfg.envFile}" ];
@@ -79,8 +92,11 @@ in {
           StateDirectory = "${cfg.user}";
           User = "${cfg.user}";
           Group = "${cfg.group}";
+          ExecStartPre = ''
+            ${pkgs.bash}/bin/bash -c 'printf "UID=%%s\nHOME=%%s\nXDG_RUNTIME_DIR=%%s\nCHECK_EXP=%%s\n" "$UID" "$HOME" "$XDG_RUNTIME_DIR" "$CHECK_EXP"'
+          '';
           ExecStart = ''
-            ${compose-wrap "/var/lib/${cfg.user}"} \
+            podman-compose \
               ${
                 optionalString (cfg.envFile != null) "--env-file=%d/envfile"
               } \
