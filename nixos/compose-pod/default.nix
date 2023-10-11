@@ -66,12 +66,17 @@ in {
       in nameValuePair "pod-${podname}" { # here the systemd unit definition
         enable = true;
         description = "Service for ${podname} pod";
-        path = with pkgs; [ podman ];
+        path = with pkgs; [
+          podman-compose
+          podman
+          su # for newuidmap => not sure how /run/wrappers/bin is generated, but in any case it must be explicitly in the path of the executed script
+        ];
         wantedBy = [ # "default.target"
         ]; # crappy UX, see https://github.com/NixOS/nixpkgs/issues/21460
         environment = { HOME = "${homeDir}"; };
         script = ''
-          ${pkgs.podman-compose}/bin/podman-compose \
+          export PATH=$PATH:/run/wrappers/bin
+          podman-compose \
             ${
               optionalString (cfg.envFile != null) "--env-file=${cfg.envFile}"
             } \
