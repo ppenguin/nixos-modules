@@ -71,14 +71,6 @@ in {
         wantedBy = [ "multi-user.target" ];
         after = [ "network.target" ];
         # restartTriggers = [ cfg.apikeyFile cfg.apisecretFile ];
-        path = with pkgs; [
-          podman-compose
-          podman
-          su # for newuidmap => not sure how /run/wrappers/bin is generated, but in any case it must be explicitly in the path of the executed script
-        ];
-
-        unitConfig = { };
-        
         serviceConfig = {
           Type = "exec";
           LoadCredential = lib.lists.optional (cfg.envFile != null) [ "envfile:${cfg.envFile}" ];
