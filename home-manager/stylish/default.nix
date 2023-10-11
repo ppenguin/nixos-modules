@@ -73,6 +73,8 @@ with builtins;
     # include in user env for manual execution
     # TODO: (for fun) make included optional packages dependent on plugins command line
     # (or improve plugin option interface of module)
+    # Or: (simpler): add option for extra packages (seems to be also some kind of convention already)
+    # And: add service dependencies (so we can e.g. make sure that hyprpaper service is started before stylish with hyprpaper plugin runs)
     home.packages = [ cfg.package ];
 
     systemd.user.services.stylish = {
