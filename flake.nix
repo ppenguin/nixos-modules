@@ -12,10 +12,11 @@
     };
 
     homeManagerModules = {
-      hyprpaper = import ./home-manager/hyprpaper self;
-      iiorient = import ./home-manager/iiorient self;
-      monitors = import ./home-manager/monitors self;
-      stylish = import ./home-manager/stylish self;
+      swaync = import ./home-manager/programs/swaync self;
+      hyprpaper = import ./home-manager/services/hyprpaper self;
+      iiorient = import ./home-manager/services/iiorient self;
+      monitors = import ./home-manager/config/monitors self;
+      stylish = import ./home-manager/services/stylish self;
     };
 
   };
