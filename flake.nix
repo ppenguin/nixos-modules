@@ -12,7 +12,7 @@
     };
 
     homeManagerModules = {
-      swaync = import ./home-manager/programs/swaync self;
+      swaync = import ./home-manager/programs/swaync.nix self;
       hyprpaper = import ./home-manager/services/hyprpaper self;
       iiorient = import ./home-manager/services/iiorient self;
       monitors = import ./home-manager/config/monitors self;
