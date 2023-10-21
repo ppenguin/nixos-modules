@@ -47,8 +47,8 @@ in {
     # but this is only slightly less verbose...
 
     # FIXME: the activation script doesn't work the first time if the user doesn't yet exist, because the create user script (a systemd service?) runs later
-    system.activationScripts = (mapAttrs' (podname: cfg: (
-      let
+    system.activationScripts = (mapAttrs' (podname: cfg:
+      (let
         ucfgDir = "/var/lib/${cfg.user}/.config";
         systemdDir = "${ucfgDir}/systemd/user";
       in nameValuePair

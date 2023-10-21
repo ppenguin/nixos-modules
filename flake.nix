@@ -1,6 +1,8 @@
 {
   description = "NixOS and Home-Manager modules";
 
+  # TODO (maybe): play with https://gitlab.com/rycee/nmd to get a good look at modules documentation
+
   outputs = { self }: {
 
     nixosModules = {
