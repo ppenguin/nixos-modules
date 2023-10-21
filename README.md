@@ -1,13 +1,13 @@
 # nixos-modules
 
-Modules to be used in ***NixOS***.
+***NixOS*** system and `home-manager` modules.
 
-A flake (to make usage easier) will follow shortly.
-
-Will soon also include `home-manager` modules, until I get around to harmonising them and make pull requests to the HM repo.
-
-Will (probably) be updated frequently.
+Will be updated occasionally, and may also occasionally have breaking changes without warning for very experiemntal modules (like `compose-pod`).
 
 ## Future
 
 This is supposed to be a kind of *staging* repo, eventually modules should be contributed to `nixpkgs` (first as flakes?) and `home-manager`.
+
+## Contributing
+
+Pull requests with suggestions (how to improve) or additions are welcome, though for complete modules and functionality please directly contribute to `nixpkgs` or `home-manager`.
