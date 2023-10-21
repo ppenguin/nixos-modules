@@ -1,4 +1,5 @@
 # for convenience directly based on https://github.com/nix-community/home-manager/blob/master/modules/programs/swaync.nix
+self:
 { config, lib, pkgs, ... }:
 
 let
@@ -12,12 +13,41 @@ let
   jsonFormat = pkgs.formats.json { };
 
   # TODO: nice to have a submodule for scripts
-  mkInt = name:
+
+  mkOptAttrs = fun: names:
+    lib.foldr (a: b: a // b) { }
+    (map (n: lib.genAttrs [ n ] (_: (fun n))) names);
+
+  mkIntPxOpt = name:
     mkOption {
       type = types.nullOr types.int;
       default = null;
       example = 10;
-      description = "Value without unit.";
+      description = "Value in pixels";
+    };
+
+  mkIntMsOpt = name:
+    mkOption {
+      type = types.nullOr types.int;
+      default = null;
+      example = 10;
+      description = "Time value in milliseconds";
+    };
+
+  mkIntSecsOpt = name:
+    mkOption {
+      type = types.nullOr types.int;
+      default = null;
+      example = 10;
+      description = "Time value in seconds";
+    };
+
+  mkBoolOpt = name:
+    mkOption {
+      type = types.nullOr types.int;
+      default = null;
+      example = 10;
+      description = "Boolean (true or false).";
     };
 
   swayncConfig = with types;
@@ -44,44 +74,53 @@ let
           example = "top";
         };
 
-#         height = mkOption {
-#           type = nullOr ints.unsigned;
-#           default = null;
-#           example = 5;
-#           description =
-#             "Height to be used by the panel if possible. Leave blank for a dynamic value.";
-#         };
-# 
-#         width = mkOption {
-#           type = nullOr ints.unsigned;
-#           default = null;
-#           example = 5;
-#           description =
-#             "Width to be used by the panel if possible. Leave blank for a dynamic value.";
-#         };
-      };
+        image-visibility = mkOption {
+          type = nullOr (enum [ "always" "when-available" ]); # TODO: more?
+          default = null;
+          description = ''
+            When to show images.
+          '';
+          example = "when-available";
+        };
+
+        # TODO (maybe): more useful widget defs: convert widgetsConfig = { <title>: {config ...}; } => { widgets: [ title, ... ], widget-config: { <title>: { config}, ... }
+
+        # TODO: one should probably be able to auto generate all options of a certain type from a list of names?
+        # => below implemented, but doesn't work yet... TODO: fix
+      }
+      /* // mkOptAttrs mkBoolOpt [ "keyboard-shortcuts" "fit-to-screen" "hide-on-clear" "hide-on-action" "script-fail-notify" ] # auto-generated options (nifty trick)
+         // mkOptAttrs mkIntPxOpt
+           (map(n: "control-center-margin-${n}" ) [ "top" "bottom" "right" "left" ])
+           ++ (lib.flatten (map(n: map(d: "${n}-${d}") [ "width" "height" ]) [ "control-center" "notification-body-image" "notification-window" ]))
+           ++ [ "notification-icon-size" ]
+         // mkOptAttrs mkIntMsOpt [ "transition-time" ]
+         // mkOptAttrs mkIntSecsOpt [ "timeout" "timeout-low" "timeout-warning" ]
+      */
+      ;
     };
 in {
-  meta.maintainers = with lib.maintainers; [ berbiche ];
+  meta.maintainers = with lib.maintainers; [ ppenguin ];
 
   options.programs.swaync = with lib.types; {
     enable = mkEnableOption "swaync";
 
     package = mkOption {
       type = package;
-      default = pkgs.swaync;
-      defaultText = literalExpression "pkgs.swaync";
+      default = pkgs.swaynotificationcenter;
+      defaultText = literalExpression "pkgs.swaynotificationcenter";
       description = ''
-        swaync package to use. Set to `null` to use the default package.
+        swaync package to use. Omit (or set to `null`) to use the default package.
       '';
     };
 
     settings = mkOption {
       type = attrsOf swayncConfig;
-      default = [ ];
+      default = { };
       description = ''
         Configuration for swaync, see <https://github.com/ErikReider/SwayNotificationCenter#configuring>
         for supported values.
+        Given as an attrset of arbitrary keys with a value that's either a json string (can also be imported from a file)
+        or as nix-style JSON values.
       '';
       # example = literalExpression ''
       #  '';
@@ -124,8 +163,7 @@ in {
 
     # TODO: check whether to remove (remnant of waybar module)
     # Makes the actual valid configuration swaync accepts
-    makeConfiguration = configuration:
-      removeTopLevelNulls configuration;
+    makeConfiguration = configuration: removeTopLevelNulls configuration;
 
     # Allow using attrs for settings instead of a list in order to more easily override
     settings = if builtins.isAttrs cfg.settings then
@@ -133,8 +171,10 @@ in {
     else
       cfg.settings;
 
-    # The clean list of configurations
-    finalConfiguration = map makeConfiguration settings;
+    # The merged config attributes (from all sources)
+    finalConfiguration = lib.foldr (a: b: a // b) {
+      "$schema" = "${cfg.package}/etc/xdg/swaync/configSchema.json";
+    } settings;
 
     configSource = jsonFormat.generate "swaync-config.json" finalConfiguration;
 
@@ -144,7 +184,7 @@ in {
 
       home.packages = [ cfg.package ];
 
-      xdg.configFile."swaync/config" = mkIf (settings != [ ]) {
+      xdg.configFile."swaync/config.json" = mkIf (settings != [ ]) {
         source = configSource;
         # TODO: check if swaync reacts as expected to USR2
         onChange = ''
@@ -168,15 +208,17 @@ in {
         Unit = {
           Description =
             "A simple notification daemon with a GTK gui for notifications and the control center";
-          Documentation = "https://github.com/ErikReider/SwayNotificationCenter#table-of-contents";
+          Documentation =
+            "https://github.com/ErikReider/SwayNotificationCenter#table-of-contents";
           PartOf = [ "graphical-session.target" ];
           After = [ "graphical-session-pre.target" ];
         };
 
         Service = {
-          ExecStart = "${cfg.package}/bin/swaync";
+          ExecStart = ''
+            ${cfg.package}/bin/swaync --config "${config.xdg.configHome}/swaync/config.json" --style "${config.xdg.configHome}/swaync/style.css"'';
           ExecReload = "${pkgs.coreutils}/bin/kill -SIGUSR2 $MAINPID";
-          Restart = "on-failure";
+          Restart = "always";
           KillMode = "mixed";
         };
 
