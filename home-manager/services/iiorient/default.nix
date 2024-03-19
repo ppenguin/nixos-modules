@@ -22,27 +22,31 @@ let
     let
       otrans = getAttr handler handlers;
       handlerCmdTpl = ''${handler} --batch "'' + builtins.concatStringsSep " ; "
-        (map (d: "keyword device:${d}:transform {}") devices) + " ; "
+        (map (d: "keyword input:${d}:transform {}") devices) + " ; "
         + builtins.concatStringsSep " ; "
         (map (m: "keyword monitor ${m},transform,{}") monitors) + ''"'';
       name = "iiorient.sh";
-    in pkgs.writeShellApplication {
-      inherit name;
-      runtimeInputs = with pkgs; [ gawk iio-sensor-proxy ] ++ [ hpkg ];
-      text = ''
-        monitor-sensor \
-          | awk ' '' + (with builtins;
+    in
+    pkgs.writeShellApplication
+      {
+        inherit name;
+        runtimeInputs = with pkgs; [ gawk iio-sensor-proxy ] ++ [ hpkg ];
+        text = ''
+          monitor-sensor \
+            | awk ' '' + (with builtins;
           concatStringsSep "; "
-          (lists.zipListsWith (a: b: ''$4 ~ /${a}/ { print "${b}" }'')
-            (attrNames otrans) (map (a: getAttr a otrans) (attrNames otrans))))
+            (lists.zipListsWith (a: b: ''$4 ~ /${a}/ { print "${b}" }'')
+              (attrNames otrans)
+              (map (a: getAttr a otrans) (attrNames otrans))))
         + ''
           ; { system("") };' \
                     | xargs -rI{} ${handlerCmdTpl}
         '';
 
-    } + "/bin/${name}";
+      } + "/bin/${name}";
 
-in {
+in
+{
   options.services.iiorient = {
     enable = mkEnableOption "iiorient";
 
@@ -54,7 +58,7 @@ in {
         Command used to process output of `monitor-sensor` (after translation if given).
         Currently only `hyprctl` is supported and will be handled like this:
         ```
-        hyprctl --batch "keyword monitor <monitors[i]>,transform,<orientation> ; keyword device:<devices[i]>:transform <orientation> ; ... "
+        hyprctl --batch "keyword monitor <monitors[i]>,transform,<orientation> ; keyword input:<devices[i]>:transform <orientation> ; ... "
         ```
         where `<orientation>` is the orientation corresponding to the mapping `{ "normal": "0", ... , "right-up": "3" }`.
       '';
@@ -73,8 +77,8 @@ in {
 
     devices = mkOption {
       type = with types; listOf str;
-      default = [ "elan2514:00-04f3:29f5" ];
-      defaultText = literalExpression ''[ "elan2514:00-04f3:29f5" ]'';
+      default = [ "touchdevice" ];
+      defaultText = literalExpression ''[ "touchdevice" ]'';
       description = ''
         Device name to substitute placeholder `<device[i]>` in the `handler`.
         (Can be obtained by getting the "Touch Device" output from `hyprctl devices`.)
