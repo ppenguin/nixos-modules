@@ -99,7 +99,7 @@ in
             then (concatStringsSep " " cfg.flags)
             else ""
           }";
-          environment = cfg.env;
+          Environment = cfg.env;
         };
 
         Install = {WantedBy = ["graphical.target"];};
