@@ -1,11 +1,7 @@
 # Based on https://github.com/Misterio77/nix-config/blob/main/modules/home-manager/monitors.nix
-self:
-{ lib, ... }:
-
-let
+self: {lib, ...}: let
   inherit (lib) mkOption types;
   # cfg = config.monitors;
-
 in {
   options.monitors = with types;
     mkOption {
@@ -39,8 +35,9 @@ in {
             example = 1080;
           };
           position = mkOption {
-            type = attrsOf (nullOr
-              int); # TODO: better with submodule (to force "x" and "y" members) but somehow it didn't work...
+            type =
+              attrsOf (nullOr
+                int); # TODO: better with submodule (to force "x" and "y" members) but somehow it didn't work...
             default = {
               x = null;
               y = null;
@@ -50,6 +47,11 @@ in {
             type = nullOr int;
             default = null;
             example = 60;
+          };
+          bitDepth = mkOption {
+            type = nullOr int;
+            default = null;
+            example = 10;
           };
           scale = mkOption {
             type = float;
@@ -62,7 +64,7 @@ in {
           # TODO: do we need transform too?
           workspaces = mkOption {
             type = listOf str;
-            default = [ ];
+            default = [];
           };
         };
       });
@@ -70,8 +72,8 @@ in {
 
   # "module" as placeholder for embedded functions
   options.hyprlandConfig = {
-    monitorConfig = mkOption { };
-    wsbind = mkOption { };
+    monitorConfig = mkOption {};
+    wsbind = mkOption {};
   };
 
   # Convert config.monitors into hyprland's format
@@ -79,32 +81,47 @@ in {
     inherit (builtins) concatStringsSep map toString filter hasAttr;
     inherit (lib.attrsets) mapAttrsToList;
 
-    ident = m:
-      (if m.description != null then "desc:${m.description}" else m.output);
+    ident = m: (
+      if m.description != null
+      then "desc:${m.description}"
+      else m.output
+    );
 
-    res = m:
-      (if m.width != null && m.height != null then
+    res = m: (
+      if m.width != null && m.height != null
+      then
         "${toString m.width}x${toString m.height}"
-        + (if m.refreshRate != null then "@${toString m.refreshRate}" else "")
-      else
-        "preferred");
+        + (
+          if m.refreshRate != null
+          then "@${toString m.refreshRate}"
+          else ""
+        )
+      else "preferred"
+    );
 
-    pos = m:
-      (if m.position.x != null && m.position.y != null then
-        "${toString m.position.x}x${toString m.position.y}"
-      else
-        "auto");
+    bits = m: (
+      if m.bitDepth != null
+      then "bitdepth,${toString m.bitDepth}"
+      else ""
+    );
 
+    scale = m: toString m.scale;
+
+    pos = m: (
+      if m.position.x != null && m.position.y != null
+      then "${toString m.position.x}x${toString m.position.y}"
+      else "auto"
+    );
   in {
-
     monitorConfig = monitors:
       concatStringsSep "\n"
-      (map (m: "monitor=${ident m}, ${res m}, ${pos m}, ${toString m.scale}")
+      (map (m: "monitor=${
+          concatStringsSep "," (lib.filter (s: s != "") (map (f: f m) [ident res pos scale bits]))
+        }")
         (mapAttrsToList (_: v: v) monitors));
 
     wsbind = monitors:
-      concatStringsSep "\n" (lib.flatten (map (m:
-        (map (w: "workspace=${toString w},monitor:${m.output}") m.workspaces))
-        (filter (m: m.output != "") (mapAttrsToList (_: v: v) monitors))));
+      concatStringsSep "\n" (lib.flatten (map (m: (map (w: "workspace=${toString w},monitor:${m.output}") m.workspaces))
+          (filter (m: m.output != "") (mapAttrsToList (_: v: v) monitors))));
   };
 }

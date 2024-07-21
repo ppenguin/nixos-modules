@@ -3,8 +3,7 @@
 
   # TODO (maybe): play with https://gitlab.com/rycee/nmd to get a good look at modules documentation
 
-  outputs = { self }: {
-
+  outputs = {self}: {
     nixosModules = {
       compose-pod = import ./nixos/compose-pod self;
       gddnsup = import ./nixos/gddnsup self;
@@ -20,6 +19,5 @@
       monitors = import ./home-manager/config/monitors self;
       stylish = import ./home-manager/services/stylish self;
     };
-
   };
 }
