@@ -10,7 +10,7 @@
       go-shadowsocks2 = import ./nixos/modules/go-shadowsocks2 self;
       linger = import ./nixos/modules/linger self;
       powerdns = import ./nixos/modules/powerdns self;
-      wg-refresh = import ./nixos/modules/wg-refresh self;
+      wg-refresh = import ./nixos/modules/wg-refresh;
     };
 
     homeManagerModules = {
@@ -22,5 +22,6 @@
     };
 
     nixos-utils = ./nixos/lib/utils.nix;
+    hm-utils = ./home-manager/lib/utils.nix;
   };
 }

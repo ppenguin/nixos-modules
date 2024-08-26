@@ -1,7 +1,9 @@
 {
-  config,
   pkgs,
+  lib,
   ...
 }: {
-  sopsCatHMSecretCmd = relpath: "${pkgs.coreutils}/bin/cat ${config.xdg.configHome}/sops-nix/secrets/${config.sops.secrets."${relpath}".name}";
+  sopsInitSecrets = prefix: secretNames: lib.genAttrs (map (n: "${prefix}/${n}") secretNames) (a: {});
+
+  sopsCatHMSecretCmd = hmcfg: relpath: "${pkgs.coreutils}/bin/cat ${hmcfg.xdg.configHome}/sops-nix/secrets/${hmcfg.sops.secrets."${relpath}".name}";
 }

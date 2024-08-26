@@ -1,12 +1,11 @@
 {
-  config,
   pkgs,
   lib,
   ...
 }:
 # rec needed because some functions refer to others in this file
 rec {
-  inherit (import ./_borg.nix {inherit config sopsCatSecretCmd;}) borgStandardJob;
+  inherit (import ./_borg.nix {inherit sopsCatSecretCmd;}) borgStandardJob;
   inherit
     (import ./_container.nix {inherit pkgs lib sopsCatSecretCmd;})
     podmanSecretEnvSops
@@ -25,7 +24,7 @@ rec {
       inherit owner group mode;
     });
 
-  sopsCatSecretCmd = relpath: "cat /run/secrets/${config.sops.secrets.${relpath}.name}";
+  sopsCatSecretCmd = cfg: relpath: "cat /run/secrets/${cfg.sops.secrets.${relpath}.name}";
 
   matchFileFromRegEx = dir: repat:
     builtins.head ((lst:
@@ -125,16 +124,9 @@ rec {
       address = ifAddr;
       # https://gist.github.com/brasey/fa2277a6d7242cdf4e4b7c720d42b567?permalink_comment_id=4002831#gistcomment-4002831
       inherit dns domains;
-      routes =
-        map
-        (r: {
-          routeConfig = {
-            Destination = r;
-          };
-        })
-        routeIPs;
-      networkConfig = networkConfig;
-      linkConfig = linkConfig;
+      routes = map (r: {Destination = r;}) routeIPs;
+      inherit networkConfig;
+      inherit linkConfig;
     };
   in {
     enable = true;
