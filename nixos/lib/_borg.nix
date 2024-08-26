@@ -1,7 +1,8 @@
-{sopsCatSecretCmd}: {
+{...}: {
   borgStandardJob = {
     user,
     repo,
+    passCommand,
     startAt ? "daily",
     paths,
     exclude,
@@ -21,7 +22,7 @@
 
     encryption = {
       # FIXME: change to passfile and pass it in as a sops path???
-      passCommand = sopsCatSecretCmd "borgbackup/repopasses/${user.name}";
+      inherit passCommand;
       mode = "authenticated-blake2"; # "repokey-blake2";
     };
 

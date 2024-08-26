@@ -5,7 +5,7 @@
 }:
 # rec needed because some functions refer to others in this file
 rec {
-  inherit (import ./_borg.nix {inherit sopsCatSecretCmd;}) borgStandardJob;
+  inherit (import ./_borg.nix {}) borgStandardJob;
   inherit
     (import ./_container.nix {inherit pkgs lib sopsCatSecretCmd;})
     podmanSecretEnvSops
@@ -24,7 +24,8 @@ rec {
       inherit owner group mode;
     });
 
-  sopsCatSecretCmd = cfg: relpath: "cat /run/secrets/${cfg.sops.secrets.${relpath}.name}";
+  # secpath: pass config.sops.secrets.${secret-lookup-path}.name
+  sopsCatSecretCmd = secpath: "${pkgs.coreutils}/bin/cat /run/secrets/${secpath}";
 
   matchFileFromRegEx = dir: repat:
     builtins.head ((lst:
