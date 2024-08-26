@@ -8,7 +8,7 @@ DNS_NAME="${ENDPOINT%:*}" # Extract DNS name from Endpoint
 PORT="${ENDPOINT##*:}"    # Extract port from Endpoint
 
 # Get the current IP from the WireGuard status
-CURRENT_IP="$(wg show "$INTERFACE" endpoints | awk -F'[[:space:]:]' '/'"$PEER_PUBLIC_KEY"'/{ print $2 }')"
+CURRENT_IP="$(wg show "$INTERFACE" endpoints | awk -F'[[:space:]:]' '/'"$(sed -e 's/[+\/]/\\&/g' <<<"$PEER_PUBLIC_KEY")"'/{ print $2 }')"
 
 # Resolve the current IP of the DNS name
 RESOLVED_IP=$(dig +short "$DNS_NAME" | tail -n 1)
