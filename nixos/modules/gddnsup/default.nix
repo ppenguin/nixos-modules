@@ -87,6 +87,7 @@ in
       systemd.services.gddnsup = {
         description = "GoDaddy DNS Updater";
         wantedBy = ["multi-user.target"];
+        requires = ["network-online.target"];
         after = ["network-online.target"];
         restartTriggers = [cfg.apikeyFile cfg.apisecretFile];
 
