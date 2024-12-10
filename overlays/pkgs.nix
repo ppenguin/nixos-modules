@@ -4,4 +4,5 @@ final: prev: {
   systray-portable = prev.callPackage ../pkgs/systray-portable {};
   ddcbc = prev.callPackage ../pkgs/ddcbc {};
   stylish = prev.callPackage ../pkgs/stylish {};
+  seaweedfs-csi-driver = prev.callPackage ../pkgs/seaweedfs-csi-driver {};
 }
