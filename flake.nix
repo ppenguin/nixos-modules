@@ -24,6 +24,7 @@
       linger = import ./nixos/modules/linger self;
       powerdns = import ./nixos/modules/powerdns self;
       wg-refresh = import ./nixos/modules/wg-refresh;
+      rpi4-pwmfan = import ./nixos/modules/rpi4-pwmfan;
       seaweedfs = import ./nixos/modules/seaweedfs;
     };
 
