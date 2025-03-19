@@ -224,6 +224,7 @@ in {
             + lib.optionalString (cfg.filerPortGrpc != null && cfg.startFiler) " -filer.port.grpc=${toString cfg.filerPortGrpc}"
             + lib.optionalString (cfg.metricsIp != null) " -metricsIp=${cfg.metricsIp}"
             + lib.optionalString (cfg.metricsPort != null) " -metricsPort=${toString cfg.metricsPort}"
+            + lib.optionalString (cfg.extraArgs != null) " ${cfg.extraArgs}"
           )
         ];
       };
