@@ -19,13 +19,14 @@
   in {
     nixosModules = {
       compose-pod = import ./nixos/modules/compose-pod self;
-      gddnsup = import ./nixos/modules/gddnsup self;
+      gddnsup = import ./nixos/modules/gddnsup;
       go-shadowsocks2 = import ./nixos/modules/go-shadowsocks2 self;
       linger = import ./nixos/modules/linger self;
       powerdns = import ./nixos/modules/powerdns self;
-      wg-refresh = import ./nixos/modules/wg-refresh;
       rpi4-pwmfan = import ./nixos/modules/rpi4-pwmfan;
       seaweedfs = import ./nixos/modules/seaweedfs;
+      wg-refresh = import ./nixos/modules/wg-refresh;
+      yacfuc = import ./nixos/modules/yacfuc;
     };
 
     homeManagerModules = {

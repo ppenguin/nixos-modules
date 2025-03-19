@@ -5,7 +5,7 @@
 #
 # Rationale: Couldn't get ddclient to work quickly enough (might be a documentation issue?), and it would be
 # overkill anyway if just using GD.
-self: {
+{
   config,
   pkgs,
   lib,
