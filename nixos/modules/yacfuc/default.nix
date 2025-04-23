@@ -42,7 +42,6 @@ in
 
         apiTokenFile = mkOption {
           type = str;
-          default = "/run/secrets/yacfuc/token";
           description = mdDoc ''
             Your *Cloudflare* API token (point this to e.g. a `sops-nix` managed path).
             It *must* have the format
@@ -95,7 +94,7 @@ in
     config = mkIf config.services.yacfuc.enable {
       assertions = [
         {
-          asssertion = cfg.iface != null || cfg.ipcmd != null;
+          assertion = cfg.iface != null || cfg.ipcmd != null;
           message = "At least one of `ipcmd` or `iface` must be set!";
         }
       ];
@@ -107,6 +106,8 @@ in
         after = ["network-online.target"];
         restartTriggers = [cfg.apiTokenFile];
 
+        path = cfg.extraPackages;
+
         serviceConfig = let
           fif =
             if (cfg.iface != null)
@@ -117,7 +118,7 @@ in
             then "--ipcmd='${cfg.ipcmd}'"
             else "";
           fdom = "--domains='${concatStringsSep " " cfg.domains}'";
-          fhostid = "--hostid='${config.networking.hostname}'";
+          fhostid = "--hostid='${config.networking.hostName}'";
           fstack = "--stack=${cfg.stack}";
           flags = concatStringsSep " " [fif fipc fdom fhostid fstack];
         in {
@@ -126,8 +127,10 @@ in
           # (only for the life cycle of the service instance). Cool stuff!
           LoadCredential = ["apitoken:${cfg.apiTokenFile}"];
           DynamicUser = true;
+          StateDirectory = "yacfuc";
           Type = "oneshot";
           EnvironmentFile = "%d/apitoken";
+          # EnvironmentFile = "/run/credentials/%N/apitoken";
           ExecStart = "${lib.getExe cfg.package} ${flags}";
         };
       };
