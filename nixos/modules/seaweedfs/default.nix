@@ -51,6 +51,26 @@ in {
         '';
       };
 
+      dataCenter = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "myDataCenter";
+        description = lib.mdDoc ''
+          Name of the data denter (seaweed default: `DefaultDataCenter`)
+          (For topologies with 1 volume server per host and one LAN, probably the LAN *is* the data center)
+        '';
+      };
+
+      rack = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "myRack";
+        description = lib.mdDoc ''
+          Name of the rack (seaweed default: `DefaultRack`)
+          (For topologies with 1 volume server per host probably the host *is* the rack)
+        '';
+      };
+
       masterPort = mkOption {
         type = types.nullOr types.int;
         default = null;
@@ -66,6 +86,15 @@ in {
         example = "9334";
         description = lib.mdDoc ''
           Master GRPC port
+        '';
+      };
+
+      masterPeers = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = ''[ "master1:9333" ]'';
+        description = lib.mdDoc ''
+          List of Address:Port of master servers
         '';
       };
 
@@ -131,9 +160,9 @@ in {
       };
 
       extraArgs = mkOption {
-        type = types.nullOr types.str;
-        default = null;
-        example = "-master.raftHashicorp";
+        type = types.listOf types.str;
+        default = [];
+        example = ''["-master.raftHashicorp"]'';
         description = lib.mdDoc ''
           Additional arguments to the server that this module not (yet) supports
         '';
@@ -212,8 +241,9 @@ in {
             + " -master=${boolToString cfg.startMaster} -volume=${boolToString cfg.startVolume} -filer=${boolToString cfg.startFiler}"
             + lib.optionalString (cfg.ip != null) " -ip=${cfg.ip}"
             + lib.optionalString (cfg.ipBind != null) " -ip.bind=${cfg.ipBind}"
-            + " -dir="
-            + (concatStringsSep "," cfg.dirs)
+            + lib.optionalString (cfg.dataCenter != null) " -dataCenter=${cfg.dataCenter}"
+            + lib.optionalString (cfg.rack != null) " -rack=${cfg.rack}"
+            + " -dir=${concatStringsSep "," cfg.dirs}"
             + lib.optionalString (cfg.volumeDirIdx != null) " -volume.dir.idx=${cfg.volumeDirIdx}"
             + lib.optionalString (cfg.volumeMax != null) " -volume.max=${toString cfg.volumeMax}"
             + lib.optionalString (cfg.masterPort != null) " -master.port=${toString cfg.masterPort}"
@@ -224,7 +254,8 @@ in {
             + lib.optionalString (cfg.filerPortGrpc != null && cfg.startFiler) " -filer.port.grpc=${toString cfg.filerPortGrpc}"
             + lib.optionalString (cfg.metricsIp != null) " -metricsIp=${cfg.metricsIp}"
             + lib.optionalString (cfg.metricsPort != null) " -metricsPort=${toString cfg.metricsPort}"
-            + lib.optionalString (cfg.extraArgs != null) " ${cfg.extraArgs}"
+            + lib.optionalString (length cfg.masterPeers > 0) " -master.peers=${concatStringsSep "," cfg.masterPeers}"
+            + lib.optionalString (length cfg.extraArgs > 0) " ${concatStringsSep " " cfg.extraArgs}"
           )
         ];
       };
