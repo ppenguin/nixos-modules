@@ -83,7 +83,7 @@ in {
       masterPortGrpc = mkOption {
         type = types.nullOr types.int;
         default = null;
-        example = "9334";
+        example = "19333";
         description = lib.mdDoc ''
           Master GRPC port
         '';
@@ -110,7 +110,7 @@ in {
       volumePortGrpc = mkOption {
         type = types.nullOr types.int;
         default = null;
-        example = "8084";
+        example = "18080";
         description = lib.mdDoc ''
           Volume server GRPC listen port
         '';
@@ -128,7 +128,7 @@ in {
       filerPortGrpc = mkOption {
         type = types.nullOr types.int;
         default = null;
-        example = "8884";
+        example = "18888";
         description = lib.mdDoc ''
           Filer server GRPC listen port
         '';
@@ -192,6 +192,18 @@ in {
         '';
       };
 
+      defaultReplication = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "010";
+        description = lib.mdDoc ''
+          Replication string "xyz" (see https://github.com/seaweedfs/seaweedfs/wiki/Replication#how-to-use)
+          x	number of replica in other data centers
+          y	number of replica in other racks in the same data center
+          z	number of replica in other servers in the same rack
+        '';
+      };
+
       metricsIp = mkOption {
         type = types.nullOr types.str;
         default = null;
@@ -243,6 +255,7 @@ in {
             + lib.optionalString (cfg.ipBind != null) " -ip.bind=${cfg.ipBind}"
             + lib.optionalString (cfg.dataCenter != null) " -dataCenter=${cfg.dataCenter}"
             + lib.optionalString (cfg.rack != null) " -rack=${cfg.rack}"
+            + lib.optionalString (cfg.startMaster && cfg.defaultReplication != null) " -master.defaultReplication=${cfg.defaultReplication}"
             + " -dir=${concatStringsSep "," cfg.dirs}"
             + lib.optionalString (cfg.volumeDirIdx != null) " -volume.dir.idx=${cfg.volumeDirIdx}"
             + lib.optionalString (cfg.volumeMax != null) " -volume.max=${toString cfg.volumeMax}"
