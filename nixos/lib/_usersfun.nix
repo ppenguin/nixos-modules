@@ -2,7 +2,7 @@
   pkgs,
   lib,
 }: let
-  inherit (pkgs) system;
+  inherit (pkgs.stdenv.hostPlatform) system;
 
   notDarwinUserAttr = [
     "uid"
