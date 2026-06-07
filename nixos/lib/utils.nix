@@ -17,6 +17,8 @@ rec {
 
   inherit (import ./_usersfun.nix {inherit pkgs lib;}) filterDarwinUserAttr;
 
+  inherit (import ./_pubkeys.nix) pubkeysFromDir filterPubkeys;
+
   sopsInitSecrets = prefix: secretNames: lib.genAttrs (map (n: "${prefix}/${n}") secretNames) (a: {});
 
   sopsInitSecretsPerms = prefix: owner: group: mode: secretNames:
